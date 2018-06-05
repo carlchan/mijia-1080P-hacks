@@ -1,50 +1,44 @@
-SCRIPT_VERSION="1.8"
+SCRIPT_VERSION="1.9"
 
 NOW=$(date +"%Y%m%d%H%M")
 LOGFILE="log-$NOW.log"
 sd_mountdir=/tmp/sd
 
-echo -e "Customm Script Start v$SCRIPT_VERSION"
-echo -e "Running Customm Script v$SCRIPT_VERSION" > $sd_mountdir/$LOGFILE
+echo -e "Custom Script Start v$SCRIPT_VERSION"
+echo -e "Running Custom Script v$SCRIPT_VERSION" > $sd_mountdir/$LOGFILE
 
 ## Config
 ##################################################################################			
-CLOUD_DISABLED=$(awk -F "=" '/CLOUD_DISABLED/ {print $2}' $sd_mountdir/midgard.ini)
+. $sd_mountdir/midgard.ini
+
 if [ -z "$CLOUD_DISABLED" ];then
  CLOUD_DISABLED=0
 fi
 
-CLOUD_STREAMING_DISABLED=$(awk -F "=" '/CLOUD_STREAMING_DISABLED/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$CLOUD_STREAMING_DISABLED" ];then
  CLOUD_STREAMING_DISABLED=0
 fi
 
-RTSP_ENABLED=$(awk -F "=" '/RTSP_ENABLED/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$RTSP_ENABLED" ];then
  RTSP_ENABLED=1
 fi
 
-CONFIG_LINE=$(awk -F "=" '/CONFIG_LINE/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$CONFIG_LINE" ];then
  CONFIG_LINE="-b4098 -f20 -w1920 -h1080"
 fi
 
-SSH_ROOT_PASS=$(awk -F "=" '/SSH_ROOT_PASS/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$SSH_ROOT_PASS" ];then
  SSH_ROOT_PASS="qwerty123456"
 fi
 
-DISABLED_OTA=$(awk -F "=" '/DISABLED_OTA/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$DISABLED_OTA" ];then
  DISABLED_OTA=0
 fi
 
-HTTP_ENABLED=$(awk -F "=" '/HTTP_ENABLED/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$HTTP_ENABLED" ];then
  HTTP_ENABLED=0
 fi
 
-SAMBA_ENABLED=$(awk -F "=" '/SAMBA_ENABLED/ {print $2}' $sd_mountdir/midgard.ini)
 if [ -z "$SAMBA_ENABLED" ];then
  SAMBA_ENABLED=0
 fi
@@ -178,11 +172,14 @@ fi
 
 hostname Valhalla 
 
+if [ ! -z "$miio_ssid" ]; then
 ## in Mode 3, the wifi is configured in AP. Restart Wifi in default mode (0).
-echo 0 > /tmp/ft_mode
-/etc/init.d/S41wifi restart
-
-
+  echo 0 > /tmp/ft_mode
+  /etc/init.d/S41wifi restart
+  /usr/sbin/nvram set miio_ssid=$miio_ssid >> $sd_mountdir/$LOGFILE 2>&1
+  /usr/sbin/nvram set miio_passwd=$miio_passwd >> $sd_mountdir/$LOGFILE 2>&1
+  /usr/sbin/nvram set miio_key_mgmt=$miio_key_mgmt >> $sd_mountdir/$LOGFILE 2>&1
+fi
 
 ## Simulate S50gm standard flow (for now)
 VERSION_FIRMWARE=`cat $VERSION | grep XIAOMI_VERSION`
